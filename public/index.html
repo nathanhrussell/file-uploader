@@ -7,7 +7,18 @@
 </head>
 <body>
     <h1>Welcome to File Uploader</h1>
-    <button onclick="logout()">Log Out</button>
+    <button id="logoutBtn" style="display: none;" onclick="logout()">Log Out</button>
+
+    <script src="/logout.js"></script>
+    <script>
+    fetch("/me", { credentials: "include" })
+        .then(res => {
+        if (res.ok) {
+            document.getElementById("logoutBtn").style.display = "inline-block";
+        } else {
+        }
+        });
+    </script>
 
     <p><a href="/register.html">Register</a></p>
     <p><a href="/login.html">Log In</a></p>

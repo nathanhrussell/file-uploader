@@ -8,7 +8,11 @@ const prisma = new PrismaClient();
 
 router.post("/register", async (req, res) => {
     const { email, password } = req.body;
-    const existing = await prisma.user.findUnique({ where: email });
+    const existing = await prisma.user.findUnique({
+        where: {
+            email: email
+        }
+        });
     if (existing) return res.status(400).json({ error: "Email already registered" });
 
     const passwordHash = await bcrypt.hash(password, 10);
@@ -31,7 +35,7 @@ router.get("/logout", (req, res) => {
 });
 
 router.get("/me", (req, res) => {
-    if (!res.isAuthenticated()) return res.status(401).json({ error: "Not authenticated"});
+    if (!req.isAuthenticated()) return res.status(401).json({ error: "Not authenticated"});
     res.json({ user: req.user});
 });
 
