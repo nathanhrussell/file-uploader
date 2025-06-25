@@ -24,14 +24,20 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     fs.unlinkSync(req.file.path); // optional: remove temp file
 
     const file = await prisma.file.create({
-      data: {
+    data: {
         name: req.file.originalname,
         size: req.file.size,
         path: result.secure_url,
         url: result.secure_url,
-        user: { connect: { id: req.user.id } },
-        folderId: folderId
-      }
+        user: {
+        connect: {
+            id: req.user.id
+        }
+        },
+        folder: folderId
+        ? { connect: { id: folderId } }
+        : undefined
+    }
     });
 
     res.json({ message: "File uploaded", file });
