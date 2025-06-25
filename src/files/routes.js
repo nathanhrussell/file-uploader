@@ -42,4 +42,37 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     }
 });
 
+router.get("/files/:id", async (req, res) => {
+    if (!req.isAuthenticated) {
+        return res.status(40).json({ error: "Not authenticated" });
+    }
+
+    const fileId = parseInt(req.params.id);
+
+
+    const file = await prisma.file.findFirst({
+        where: {
+        id: fileId,
+        userId: req.user.id
+        },
+        include: {
+        folder: true
+        }
+    });
+
+    if (!file) {
+        return res.status(404).json({ error: "File not found or not yours."});
+    }
+
+    res.json({
+        id: file.id,
+        name: file.name,
+        size: file.size,
+        uploadTime: file.uploadTime,
+        folder: file.folder
+            ? { id: file.folder.id, name: file.folder.name }
+            : null
+    });
+});
+
 module.exports = router;
