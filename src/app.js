@@ -5,9 +5,12 @@ const session = require("./middlewares/session");
 const authRoutes = require("./auth/routes");
 const fileRoutes = require("../src/files/routes");
 const folderRoutes = require("../src/folders/routes");
+const path = require("path");
 require("./auth/passport");
 
 const app = express();
+
+app.use(express.static(path.join(__dirname, "../public")));
 
 app.use(cors());
 app.use(express.json());
