@@ -1,58 +1,58 @@
 const express = require("express");
-const upload = require("../middlewares/upload");
+const multer = require("multer");
+const fs = require("fs");
 const { PrismaClient } = require("@prisma/client");
+const cloudinary = require("cloudinary").v2;
 
 const router = express.Router();
 const prisma = new PrismaClient();
-const path = require("path");
+const upload = multer({ dest: "uploads/" });
 
-const fs = require("fs");
-const cloudinary = require("../utils/cloudinary");
+require("dotenv").config();
+
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 router.post("/upload", upload.single("file"), async (req, res) => {
-    if (!req.isAuthenticated) {
-        return res.status(40).json({ error: "Not authenticated" });
-    }
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
 
-    if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-    }
+  const folderId = req.body.folderId ? parseInt(req.body.folderId) : null;
 
-    const { path, originalname, size } = req.file;
-
-    try {
-        const result = await cloudinary.uploader.upload(path, {
-            resource_type: "auto",
-            folder: "user_uploads"
-        });
-
-        fs.unlinkSync(path);
-
-        const file = await prisma.file.create({
-            data: {
-                name: originalname,
-                size: size,
-                path: result.secure_url,
-                user: { connect: { id: req.user.id } },
-                folderId: req.body.folderId ? parseInt(req.body.folderId) : null
-            }
-        });
-
-    res.status(201).json({
-        message:"File uploaded",
-        file: {
-            id: file.id,
-            name: file.name,
-            size: file.size,
-            url: file.path,
-            uploadTime: file.uploadTime
-        }
+  try {
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "raw",
+      folder: "user_uploads"
     });
-    } catch (error) {
-        console.error("Upload error:", error);
-        res.status(500).json({ error: "Failed to upload file" });
-    }
+
+    fs.unlinkSync(req.file.path);
+
+    const file = await prisma.file.create({
+      data: {
+        name: req.file.originalname,
+        size: req.file.size,
+        path: result.secure_url,
+        url: result.secure_url,
+        user: { connect: { id: req.user.id } },
+        folderId: folderId || null
+      }
+    });
+
+    res.json({ message: "File uploaded successfully", file });
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ error: "Upload failed" });
+  }
 });
+
+module.exports = router;
+
 
 router.get("/files/:id", async (req, res) => {
     if (!req.isAuthenticated) {
