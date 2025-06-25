@@ -6,6 +6,9 @@ const router = express.Router();
 const prisma = new PrismaClient();
 const path = require("path");
 
+const fs = require("fs");
+const cloudinary = require("../utils/cloudinary");
+
 router.post("/upload", upload.single("file"), async (req, res) => {
     if (!req.isAuthenticated) {
         return res.status(40).json({ error: "Not authenticated" });
@@ -15,17 +18,25 @@ router.post("/upload", upload.single("file"), async (req, res) => {
         return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const { filename, size, path } = req.file;
+    const { path, originalname, size } = req.file;
 
     try {
+        const result = await cloudinary.uploader.upload(path, {
+            resource_type: "auto",
+            folder: "user_uploads"
+        });
+
+        fs.unlinkSync(path);
+
         const file = await prisma.file.create({
             data: {
-                name: filename,
+                name: originalname,
                 size: size,
-                path: path,
-                use: { connect: { id: req.user.id } }
+                path: result.secure_url,
+                user: { connect: { id: req.user.id } },
+                folderId: req.body.folderId ? parseInt(req.body.folderId) : null
             }
-    });
+        });
 
     res.status(201).json({
         message:"File uploaded",
@@ -33,13 +44,13 @@ router.post("/upload", upload.single("file"), async (req, res) => {
             id: file.id,
             name: file.name,
             size: file.size,
+            url: file.path,
             uploadTime: file.uploadTime
         }
     });
-
     } catch (error) {
-        console.error("Error saving file to DB:", error);
-        res.status(500).json({ error: "Failed to save file" });
+        console.error("Upload error:", error);
+        res.status(500).json({ error: "Failed to upload file" });
     }
 });
 
