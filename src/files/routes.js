@@ -4,6 +4,7 @@ const { PrismaClient } = require("@prisma/client");
 
 const router = express.Router();
 const prisma = new PrismaClient();
+const path = require("path");
 
 router.post("/upload", upload.single("file"), async (req, res) => {
     if (!req.isAuthenticated) {
@@ -72,6 +73,34 @@ router.get("/files/:id", async (req, res) => {
         folder: file.folder
             ? { id: file.folder.id, name: file.folder.name }
             : null
+    });
+});
+
+router.get("/files/:id/download", async (req, res) => {
+    if (!req.isAuthenticated) {
+        return res.status(40).json({ error: "Not authenticated" });
+    }
+
+    const fileId = parseInt(req.params.id);
+
+    const file = await prisma.file.findFirst({
+        where: {
+        id: fileId,
+        userId: req.user.id
+        },
+    });
+
+    if (!file) {
+        return res.status(404).json({ error: "File not found or not yours."});
+    }
+
+    const filePath = path.resolve(file.path);
+
+    res.download(filePath, file.name, (err) => {
+        if (err) {
+            console.error("Download failed:", err);
+            res.status(500).json({ error: "Failed to download file" });
+        }
     });
 });
 
