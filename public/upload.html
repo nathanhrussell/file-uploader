@@ -7,7 +7,20 @@
 </head>
 <body>
     <h1>Upload a File</h1>
-    <button onclick="logout()">Log Out</button>
+    <button id="logoutBtn" style="display: none;" onclick="logout()">Log Out</button>
+    
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        fetch("/me", { credentials: "include" })
+            .then(res => {
+                if (res.ok) {
+                    document.getElementById("logoutBtn").style.display = "inline-block";
+                }
+            });
+    });
+    </script>
+
+
 
     <form id="uploadform" enctype="multipart/form-data" method="POST" action="/upload">
         <input type="file" name="file" required />

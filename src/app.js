@@ -1,5 +1,4 @@
 const express = require("express");
-const passport = require("passport");
 const cors = require("cors");
 const authRoutes = require("./auth/routes");
 const fileRoutes = require("../src/files/routes");
@@ -14,9 +13,6 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-app.use(passport.initialize());
-app.use(passport.session());
 
 app.use(authRoutes);
 app.use(fileRoutes);
