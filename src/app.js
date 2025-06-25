@@ -3,6 +3,7 @@ const passport = require("passport");
 const cors = require("cors");
 const session = require("./middlewares/session");
 const authRoutes = require("./auth/routes");
+const fileRoutes = require("../files/routes");
 require("./auth/passport");
 
 const app = express();
@@ -15,5 +16,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(authRoutes);
+app.use(fileRoutes);
 
 module.exports = app;
