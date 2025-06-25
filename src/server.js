@@ -1,14 +1,10 @@
 const express = require("express");
-const session = require("express-session");
 const cors = require("cors");
 const passport = require("passport");
 const session = require("./middlewares/session");
 const authRoutes = require("./auth/routes");
+const app = require("./app");
 require("./auth/passport");
-
-dotenv.config();
-
-const app = express();
 
 app.use(cors());
 app.use(express.json());
@@ -21,9 +17,13 @@ app.use(authRoutes);
 const dotenv = require("dotenv");
 dotenv.config();
 
-const app = require("./app");
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+});
+
+app.get("/", (req, res) => {
+  res.send("Server is running 🚀");
 });
