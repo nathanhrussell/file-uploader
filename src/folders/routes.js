@@ -1,8 +1,51 @@
 const express = require("express");
+const router = express.Router();
+const multer = require("multer");
+const upload = multer({ dest: "uploads/" });
+const fs = require("fs");
+const cloudinary = require("cloudinary").v2;
 const { PrismaClient } = require("@prisma/client");
 
-const router = express.Router();
 const prisma = new PrismaClient();
+
+router.post("/upload", upload.single("file"), async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  const folderId = req.body.folderId ? parseInt(req.body.folderId) : null;
+
+  try {
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      resource_type: "raw",
+      folder: "user_uploads"
+    });
+
+    fs.unlinkSync(req.file.path); // optional: remove temp file
+
+    const file = await prisma.file.create({
+      data: {
+        name: req.file.originalname,
+        size: req.file.size,
+        path: result.secure_url,
+        url: result.secure_url,
+        user: { connect: { id: req.user.id } },
+        folderId: folderId
+      }
+    });
+
+    res.json({ message: "File uploaded", file });
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ error: "Upload failed" });
+  }
+});
+
+module.exports = router;
+
+
+module.exports = router;
+
 
 router.get("/folders", async (req, res) => {
     if (!req.isAuthenticated()) {
