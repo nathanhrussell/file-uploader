@@ -186,4 +186,43 @@ router.post("/folders/:id/share", async (req, res) => {
 }
 });
 
+router.get("/share/:token", async (req, res) => {
+  const { token } = req.params;
+
+  try {
+    const folder = await prisma.folder.findUnique({
+      where: { shareToken: token },
+      include: {
+        files: true
+      }
+    });
+
+    if (!folder) {
+      return res.status(404).json({ error: "Folder not found or link invalid" });
+    }
+
+    if (folder.sharedUntil && new Date() > folder.sharedUntil) {
+      return res.status(410).json({ error: "Link has expired" });
+    }
+
+    res.json({
+      folder: {
+        id: folder.id,
+        name: folder.name,
+        sharedUntil: folder.sharedUntil,
+        files: folder.files.map(file => ({
+          id: file.id,
+          name: file.name,
+          size: file.size,
+          uploadTime: file.uploadTime,
+          url: file.url
+        }))
+      }
+    });
+  } catch (err) {
+    console.error("Error accessing shared folder:", err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
 module.exports = router;
