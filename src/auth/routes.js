@@ -24,9 +24,23 @@ router.post("/register", async (req, res) => {
     });
 });
 
-router.post("/login", passport.authenticate("local"), (req, res) => {
-    res.json({ message: "Logged in"});
+router.post("/login", (req, res, next) => {
+  passport.authenticate("local", (err, user, info) => {
+    if (err) {
+      return res.status(500).json({ error: "Internal server error" });
+    }
+    if (!user) {
+      return res.status(401).json({ error: info?.message || "Login failed" });
+    }
+    req.logIn(user, (err) => {
+      if (err) {
+        return res.status(500).json({ error: "Login failed" });
+      }
+      return res.json({ message: "Logged in successfully" });
+    });
+  })(req, res, next);
 });
+
 
 router.get("/logout", (req, res) => {
     req.logout(() => {
