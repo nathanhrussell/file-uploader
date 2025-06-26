@@ -5,9 +5,11 @@ async function logout() {
     });
 
     if (res.ok) {
-        alert("Logged out");
-        window.location.href = "/index.html";
+        showMessage("Logged out");
+        setTimeout(() => {
+            window.location.href = "/index.html";
+        }, 1000);
     } else {
-        alert("Failed to log out");
+        showMessage("Logout failed");
     }
 }
