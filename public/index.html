@@ -9,10 +9,9 @@
     <h1>Welcome to File Uploader</h1>
 
     <p id="message" style="font-weight: bold;"></p>
-    
-    <button id="logoutBtn" style="display: none;" onclick="logout()">Log Out</button>
 
-    <script src="/logout.js"></script>
+    <button id="logoutBtn" style="display: none;" onclick="logout()">Log Out</button>
+    
     <script>
     fetch("/me", { credentials: "include" })
         .then(res => {
@@ -27,6 +26,7 @@
     <p><a href="/login.html">Log In</a></p>
     <p><a href="/upload.html">Upload a File</a> (requires login)</p>
 
+<script src="/js/message.js"></script>
 <script src="/logout.js"></script>
 </body>
 </html>
