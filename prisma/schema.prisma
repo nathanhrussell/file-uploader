@@ -37,13 +37,16 @@ model File {
 }
 
 model Folder {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  files     File[]
+  id           Int       @id @default(autoincrement())
+  name         String
+  user         User      @relation(fields: [userId], references: [id])
+  userId       Int
+  createdAt    DateTime  @default(now())
+  files        File[]
+  shareToken   String?   @unique
+  sharedUntil  DateTime?
 }
+
 
 model Session {
   id        String   @id
