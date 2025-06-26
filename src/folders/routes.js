@@ -5,6 +5,7 @@ const upload = multer({ dest: "uploads/" });
 const fs = require("fs");
 const cloudinary = require("cloudinary").v2;
 const { PrismaClient } = require("@prisma/client");
+const { v4: uuidv4 } = require("uuid");
 
 const prisma = new PrismaClient();
 
@@ -21,7 +22,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       folder: "user_uploads"
     });
 
-    fs.unlinkSync(req.file.path); // optional: remove temp file
+    fs.unlinkSync(req.file.path);
 
     const file = await prisma.file.create({
     data: {
@@ -46,12 +47,6 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     res.status(500).json({ error: "Upload failed" });
   }
 });
-
-module.exports = router;
-
-
-module.exports = router;
-
 
 router.get("/folders", async (req, res) => {
     if (!req.isAuthenticated()) {
@@ -152,6 +147,43 @@ router.get("/folders/:id/files", async (req, res) => {
     });
 
     res.json(files);
+});
+
+router.post("/folders/:id/share", async (req, res) => {
+  const folderId = parseInt(req.params.id);
+  const { days = 1 } = req.body;
+
+  if (!req.isAuthenticated?.()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  try {
+    const folder = await prisma.folder.findUnique({
+      where: { id: folderId },
+      include: { user: true }
+    });
+
+    if (!folder || folder.userId !== req.user.id) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+
+    const shareToken = uuidv4();
+    const sharedUntil = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
+    await prisma.folder.update({
+        where: { id: folderId },
+        data: {
+            shareToken,
+            sharedUntil
+        }
+    });
+
+    const shareUrl = `${req.protocol}//${req.get("host")}/share/${shareToken}`;
+    res.json({ message: "Share link generated", shareUrl });
+} catch (err) {
+    console.error("Error generating share link:", err);
+    res.status(500).json({ error: "Something went wrong" });
+}
 });
 
 module.exports = router;
