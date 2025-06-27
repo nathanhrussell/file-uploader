@@ -145,4 +145,29 @@ router.delete("/files/:id", async (req, res) => {
     }
 });
 
+router.get("/files", async (req, res) => {
+  if (!req.isAuthenticated?.()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  try {
+    const files = await prisma.file.findMany({
+      where: {
+        userId: req.user.id
+      },
+      include: {
+        folder: true
+      },
+      orderBy: {
+        uploadTime: "desc"
+      }
+    });
+
+    res.json(files);
+  } catch (err) {
+    console.error("Error fetching files:", err);
+    res.status(500).json({ error: "Failed to fetch files" });
+  }
+});
+
 module.exports = router;
