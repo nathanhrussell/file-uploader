@@ -60,7 +60,7 @@ module.exports = router;
 
 
 router.get("/files/:id", async (req, res) => {
-    if (!req.isAuthenticated) {
+    if (!req.isAuthenticated?.()) {
         return res.status(40).json({ error: "Not authenticated" });
     }
 
@@ -93,7 +93,7 @@ router.get("/files/:id", async (req, res) => {
 });
 
 router.get("/files/:id/download", async (req, res) => {
-    if (!req.isAuthenticated) {
+    if (!req.isAuthenticated?.()) {
         return res.status(40).json({ error: "Not authenticated" });
     }
 
@@ -121,7 +121,7 @@ router.get("/files/:id/download", async (req, res) => {
 });
 
 router.delete("/files/:id", async (req, res) => {
-    if (!req.isAuthenticated) {
+    if (!req.isAuthenticated?.()) {
         return res.status(40).json({ error: "Not authenticated" });
     }
 
