@@ -52,7 +52,7 @@
         if (!res.ok) window.location.href = "/login.html";
       });
 
-    fetch("/my-files", { credentials: "include" })
+    fetch("/files", { credentials: "include" })
       .then(res => res.json())
       .then(data => {
         const table = document.querySelector("#fileTable tbody");
