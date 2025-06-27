@@ -18,34 +18,39 @@
 
         const token = window.location.pathname.split("/").pop();
 
-        fetch(`/share/${token}`)
-        .then (async (res) => {
-            const data = await res.json();
-            if (!res.ok) {
-                message.textContent = data.error || "Something went wrong.";
-                return;
-            }
+        fetch(`/api/share/${token}`)
+            .then(async (res) => {
+                const data = await res.json();
 
-            folderName.textContent = data.folder.name;
+                if (!res.ok) {
+                    message.textContent = data.error || "Something went wrong.";
+                    return;
+                }
 
-            if (data.folder.files.length === 0) {
-                fileList.innerHTML = "<li>No files in this folder</li>";
-                return;
-            }
+                folderName.textContent = data.folder.name;
 
-            data.folder.files.forEach(file => {
-                const li = document.createElement("li");
-                li.innerHTML = `
-                    <strong>${file.name}</strong> (${(file.size / 1024).toFixed(2)} KB) -
-                    <a href="${file.url}" target="_blank" download>Download</a>
-                `;
-                fileList.appendChild(li);
+                if (!data.folder.files.length) {
+                    fileList.innerHTML = "<li>No files in this folder</li>";
+                    return;
+                }
+
+                data.folder.files.forEach(file => {
+                    const li = document.createElement("li");
+                    const sizeKb = (file.size / 1024).toFixed(2);
+
+                    li.innerHTML = `
+                        <strong>${file.name}</strong>
+                        (${sizeKb} KB, uploaded on ${new Date(file.uploadTime).toLocaleString()})
+                        — <a href="${file.url}" target="_blank" download>Download</a>
+                    `;
+
+                    fileList.appendChild(li);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                message.textContent = "Error loading shared folder.";
             });
-        })
-        .catch(err => {
-            console.error(err);
-            message.textContent = "Error loading shared folder.";
-        });
     </script>
 </body>
 </html>
