@@ -120,4 +120,29 @@ router.get("/files/:id/download", async (req, res) => {
     });
 });
 
+router.delete("/files/:id", async (req, res) => {
+    if (!req.isAuthenticated) {
+        return res.status(40).json({ error: "Not authenticated" });
+    }
+
+    try {
+        const file = await prisma.file.findUnique({
+            where: { id: Number(req.params.id) }
+        });
+
+        if (!file || file.userId !== req.user.id) {
+            return res.status(404).json({ error: "File not found or not yours."});
+        }
+
+        await prisma.file.delete({
+            where: { id: file.id }
+        });
+
+        res.json({ message: "File deleted" });
+    } catch (err) {
+        console.error("Delete error:", err);
+        res.status(55).json({ error: "Failed to delete file "});
+    }
+});
+
 module.exports = router;
