@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Folder</title>
+</head>
+<body>
+    <h1>Shared Folder</h1>
+    <p id="message" style="font-weight: bold;"></p>
+    <h2 id="folderName"></h2>
+    <ul id="fileList"></ul>
+
+    <script>
+        const message = document.getElementById("message");
+        const folderName = document.getElementById("folderName");
+        const fileList = document.getElementById("fileList");
+
+        const token = window.location.pathname.split("/").pop();
+
+        fetch(`/share/${token}`)
+        .then (async (res) => {
+            const data = await res.json();
+            if (!res.ok) {
+                message.textContent = data.error || "Something went wrong.";
+                return;
+            }
+
+            folderName.textContent = data.folder.name;
+
+            if (data.folder.files.length === 0) {
+                fileList.innerHTML = "<li>No files in this folder</li>";
+                return;
+            }
+
+            data.folder.files.forEach(file => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <strong>${file.name}</strong> (${(file.size / 1024).toFixed(2)} KB) -
+                    <a href="${file.url}" target="_blank" download>Download</a>
+                `;
+                fileList.appendChild(li);
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            message.textContent = "Error loading shared folder.";
+        });
+    </script>
+</body>
+</html>
