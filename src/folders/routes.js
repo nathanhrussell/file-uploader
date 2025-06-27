@@ -186,7 +186,13 @@ router.post("/folders/:id/share", async (req, res) => {
 }
 });
 
+const path = require("path");
+
 router.get("/share/:token", async (req, res) => {
+  res.sendFile(path.join(__dirname, "../../public/shared.html"));
+});
+
+router.get("/api/share/:token", async (req, res) => {
   const { token } = req.params;
 
   try {
@@ -224,5 +230,6 @@ router.get("/share/:token", async (req, res) => {
     res.status(500).json({ error: "Something went wrong" });
   }
 });
+
 
 module.exports = router;
