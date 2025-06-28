@@ -92,8 +92,10 @@ router.get("/files/:id", async (req, res) => {
     });
 });
 
+const https = require("https");
+
 router.get("/files/:id/download", async (req, res) => {
-  if (!req.isAuthenticated()) {
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
@@ -110,9 +112,14 @@ router.get("/files/:id/download", async (req, res) => {
     return res.status(404).json({ error: "File not found or not yours." });
   }
 
-  const downloadUrl = `${file.url}?response-content-disposition=attachment%3B%20filename%3D"${encodeURIComponent(file.name)}"`;
-
-  res.redirect(downloadUrl);
+  https.get(file.url, (cloudRes) => {
+    res.setHeader("Content-Disposition", `attachment; filename="${file.name}"`);
+    res.setHeader("Content-Type", cloudRes.headers["content-type"]);
+    cloudRes.pipe(res);
+  }).on("error", (err) => {
+    console.error("Download failed:", err);
+    res.status(500).json({ error: "Failed to download file" });
+  });
 });
 
 router.delete("/files/:id", async (req, res) => {
