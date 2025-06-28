@@ -93,31 +93,26 @@ router.get("/files/:id", async (req, res) => {
 });
 
 router.get("/files/:id/download", async (req, res) => {
-    if (!req.isAuthenticated?.()) {
-        return res.status(40).json({ error: "Not authenticated" });
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  const fileId = parseInt(req.params.id);
+
+  const file = await prisma.file.findFirst({
+    where: {
+      id: fileId,
+      userId: req.user.id
     }
+  });
 
-    const fileId = parseInt(req.params.id);
+  if (!file) {
+    return res.status(404).json({ error: "File not found or not yours." });
+  }
 
-    const file = await prisma.file.findFirst({
-        where: {
-        id: fileId,
-        userId: req.user.id
-        },
-    });
+  const downloadUrl = `${file.url}?response-content-disposition=attachment%3B%20filename%3D"${encodeURIComponent(file.name)}"`;
 
-    if (!file) {
-        return res.status(404).json({ error: "File not found or not yours."});
-    }
-
-    const filePath = path.resolve(file.path);
-
-    res.download(filePath, file.name, (err) => {
-        if (err) {
-            console.error("Download failed:", err);
-            res.status(500).json({ error: "Failed to download file" });
-        }
-    });
+  res.redirect(downloadUrl);
 });
 
 router.delete("/files/:id", async (req, res) => {
