@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Folders</title>
+</head>
+<body>
+  <h1>📁 My Folders</h1>
+  <p id="message" style="font-weight: bold;"></p>
+
+  <form id="createFolderForm">
+    <input type="text" id="newFolderName" placeholder="New Folder Name" required />
+    <button type="submit">Create Folder</button>
+  </form>
+
+  <table border="1" id="folderTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Created</th>
+        <th>Files</th>
+        <th>Share</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const folderTable = document.querySelector("#folderTable tbody");
+    const message = document.getElementById("message");
+
+    async function fetchFolders() {
+      const res = await fetch("/folders", { credentials: "include" });
+      const data = await res.json();
+
+      folderTable.innerHTML = "";
+
+      data.forEach(folder => {
+        const row = document.createElement("tr");
+
+        row.innerHTML = `
+          <td contenteditable="true" onblur="renameFolder(${folder.id}, this.textContent)">${folder.name}</td>
+          <td>${new Date(folder.createdAt).toLocaleString()}</td>
+          <td><a href="/folder-files.html?id=${folder.id}">📎 View</a></td>
+          <td>
+            <select onchange="shareFolder(${folder.id}, this.value)">
+              <option value="">Share...</option>
+              <option value="1">1 day</option>
+              <option value="3">3 days</option>
+              <option value="10">10 days</option>
+            </select>
+          </td>
+          <td>
+            <button onclick="deleteFolder(${folder.id})">❌ Delete</button>
+          </td>
+        `;
+
+        folderTable.appendChild(row);
+      });
+    }
+
+    async function renameFolder(id, newName) {
+      if (!newName.trim()) return;
+      const res = await fetch(`/folders/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name: newName })
+      });
+      if (!res.ok) alert("Rename failed");
+    }
+
+    async function deleteFolder(id) {
+      if (!confirm("Are you sure?")) return;
+      const res = await fetch(`/folders/${id}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      if (res.ok) fetchFolders();
+      else alert("Delete failed");
+    }
+
+    async function shareFolder(id, days) {
+      if (!days) return;
+      const res = await fetch(`/folders/${id}/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ days: parseInt(days) })
+      });
+      const data = await res.json();
+      if (res.ok) prompt("Shareable Link:", data.shareUrl);
+      else alert(data.error || "Share failed");
+    }
+
+    document.getElementById("createFolderForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const name = document.getElementById("newFolderName").value;
+      const res = await fetch("/folders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name })
+      });
+      if (res.ok) {
+        document.getElementById("newFolderName").value = "";
+        fetchFolders();
+      } else {
+        alert("Folder creation failed");
+      }
+    });
+
+    fetchFolders();
+  </script>
+</body>
+</html>
