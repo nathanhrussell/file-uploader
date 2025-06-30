@@ -124,29 +124,37 @@ router.delete("/folders/:id", async (req, res) => {
 });
 
 router.get("/folders/:id/files", async (req, res) => {
-    if (!req.isAuthenticated()) {
-        return res.status(401).json({ error: "Not authenticated"});
-    }
+  if (!req.isAuthenticated?.()) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
 
-    const folderId = parseInt(req.params.id);
+  const folderId = parseInt(req.params.id, 10);
+  if (isNaN(folderId)) {
+    return res.status(400).json({ error: "Invalid folder ID" });
+  }
 
-    const folder = await prisma.folder.findFirst({
-        where: { id: folderId, userId: req.user.id }
+  try {
+    const folder = await prisma.folder.findUnique({
+      where: { id: folderId },
     });
 
-    if (!folder) {
-        return res.status(404).json({ error: "Folder not found or not yours"});
+    if (!folder || folder.userId !== req.user.id) {
+      return res.status(404).json({ error: "Folder not found or not yours" });
     }
 
     const files = await prisma.file.findMany({
-        where: {
-            folderId: folderId,
-            userId: req.user.id
-        },
-        orderBy: { uploadTime: "desc" }
+      where: {
+        folderId: folderId,
+        userId: req.user.id
+      },
+      orderBy: { uploadTime: "desc" }
     });
 
     res.json(files);
+  } catch (err) {
+    console.error("Error fetching folder files:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 router.post("/folders/:id/share", async (req, res) => {

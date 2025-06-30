@@ -17,6 +17,7 @@
     <thead>
       <tr>
         <th>Name</th>
+        <th>View Files</th>
         <th>Share</th>
         <th>Rename</th>
         <th>Delete</th>
@@ -42,6 +43,7 @@
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${folder.name}</td>
+          <td><a href="/folder-files.html?id=${folder.id}">View</a></td>
           <td>
             <input type="number" id="days-${folder.id}" min="1" max="30" placeholder="Days" style="width: 60px;" />
             <button onclick="shareFolder(${folder.id})">Share</button>
