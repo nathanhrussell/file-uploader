@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My Folders</title>
 </head>
 <body>
   <h1>📁 My Folders</h1>
   <p id="message" style="font-weight: bold;"></p>
 
-  <form id="createFolderForm">
-    <input type="text" id="newFolderName" placeholder="New Folder Name" required />
+  <form id="newFolderForm">
+    <input type="text" name="name" placeholder="New folder name" required />
     <button type="submit">Create Folder</button>
   </form>
 
@@ -18,101 +17,138 @@
     <thead>
       <tr>
         <th>Name</th>
-        <th>Created</th>
-        <th>Files</th>
         <th>Share</th>
-        <th>Actions</th>
+        <th>Rename</th>
+        <th>Delete</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 
   <script>
-    const folderTable = document.querySelector("#folderTable tbody");
-    const message = document.getElementById("message");
-
     async function fetchFolders() {
       const res = await fetch("/folders", { credentials: "include" });
       const data = await res.json();
 
-      folderTable.innerHTML = "";
+      const table = document.querySelector("#folderTable tbody");
+      table.innerHTML = "";
+
+      if (!Array.isArray(data)) {
+        document.getElementById("message").textContent = "Failed to load folders.";
+        return;
+      }
 
       data.forEach(folder => {
         const row = document.createElement("tr");
-
         row.innerHTML = `
-          <td contenteditable="true" onblur="renameFolder(${folder.id}, this.textContent)">${folder.name}</td>
-          <td>${new Date(folder.createdAt).toLocaleString()}</td>
-          <td><a href="/folder-files.html?id=${folder.id}">📎 View</a></td>
+          <td>${folder.name}</td>
           <td>
-            <select onchange="shareFolder(${folder.id}, this.value)">
-              <option value="">Share...</option>
-              <option value="1">1 day</option>
-              <option value="3">3 days</option>
-              <option value="10">10 days</option>
-            </select>
+            <input type="number" id="days-${folder.id}" min="1" max="30" placeholder="Days" style="width: 60px;" />
+            <button onclick="shareFolder(${folder.id})">Share</button>
           </td>
           <td>
-            <button onclick="deleteFolder(${folder.id})">❌ Delete</button>
+            <input type="text" id="rename-${folder.id}" placeholder="New name" />
+            <button onclick="renameFolder(${folder.id})">Rename</button>
+          </td>
+          <td>
+            <button onclick="deleteFolder(${folder.id})">Delete</button>
           </td>
         `;
-
-        folderTable.appendChild(row);
+        table.appendChild(row);
       });
     }
 
-    async function renameFolder(id, newName) {
-      if (!newName.trim()) return;
-      const res = await fetch(`/folders/${id}`, {
+    async function shareFolder(folderId) {
+      const input = document.getElementById(`days-${folderId}`);
+      const days = Math.min(Math.max(parseInt(input?.value) || 1, 1), 30);
+
+      const res = await fetch(`/folders/${folderId}/share`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ days })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Share link: ${data.shareUrl}`);
+      } else {
+        alert(data.error || "Failed to generate share link");
+      }
+    }
+
+    async function renameFolder(folderId) {
+      const input = document.getElementById(`rename-${folderId}`);
+      const newName = input.value.trim();
+      if (!newName) return alert("New name cannot be empty");
+
+      const res = await fetch(`/folders/${folderId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ name: newName })
       });
-      if (!res.ok) alert("Rename failed");
+
+      if (res.ok) {
+        fetchFolders();
+      } else {
+        alert("Failed to rename folder");
+      }
     }
 
-    async function deleteFolder(id) {
-      if (!confirm("Are you sure?")) return;
-      const res = await fetch(`/folders/${id}`, {
+    async function deleteFolder(folderId) {
+      if (!confirm("Are you sure you want to delete this folder?")) return;
+
+      const res = await fetch(`/folders/${folderId}`, {
         method: "DELETE",
         credentials: "include"
       });
-      if (res.ok) fetchFolders();
-      else alert("Delete failed");
+
+      if (res.ok) {
+        fetchFolders();
+      } else {
+        alert("Failed to delete folder");
+      }
     }
 
-    async function shareFolder(id, days) {
-      if (!days) return;
-      const res = await fetch(`/folders/${id}/share`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ days: parseInt(days) })
-      });
-      const data = await res.json();
-      if (res.ok) prompt("Shareable Link:", data.shareUrl);
-      else alert(data.error || "Share failed");
-    }
-
-    document.getElementById("createFolderForm").addEventListener("submit", async e => {
+    document.getElementById("newFolderForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const name = document.getElementById("newFolderName").value;
+      const input = e.target.name;
+      const name = input.value.trim();
+
+      if (!name) return;
+
       const res = await fetch("/folders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ name })
       });
+
       if (res.ok) {
-        document.getElementById("newFolderName").value = "";
+        input.value = "";
         fetchFolders();
       } else {
-        alert("Folder creation failed");
+        alert("Failed to create folder");
       }
     });
 
-    fetchFolders();
+    // Auth protection
+    fetch("/me", { credentials: "include" })
+      .then(res => {
+        if (!res.ok) {
+          window.location.href = "/login.html";
+        } else {
+          fetchFolders();
+        }
+      })
+      .catch(() => {
+        window.location.href = "/login.html";
+      });
   </script>
+
+  <script src="/js/message.js"></script>
+  <script src="/logout.js"></script>
+  <script src="/js/navbar.js"></script>
 </body>
 </html>
