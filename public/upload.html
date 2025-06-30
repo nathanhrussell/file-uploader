@@ -4,6 +4,19 @@
 
   <p id="message" style="font-weight: bold;"></p>
 
+
+  <script>
+    fetch("/me", {credentials: "include "})
+    .then(res => {
+      if (!res.ok) {
+        window.location.href="/login.html";
+      }
+    })
+    .catch(() => {
+      window.location.href="/login.html";
+    });
+  </script>
+
   <form id="uploadform" enctype="multipart/form-data" method="POST" action="/upload">
     <input type="file" name="file" required />
     <input type="number" name="folderId" placeholder="Folder ID (optional)" />
