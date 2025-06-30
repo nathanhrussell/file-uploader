@@ -1,30 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Upload a File</title>
+</head>
 <body>
   <h1>Upload a File</h1>
+
   <button id="logoutBtn" style="display: none;" onclick="logout()">Log Out</button>
 
   <p id="message" style="font-weight: bold;"></p>
 
-
-  <script>
-    fetch("/me", {credentials: "include" })
-    .then(res => {
-      if (!res.ok) {
-        window.location.href="/login.html";
-      }
-    })
-    .catch(() => {
-      window.location.href="/login.html";
-    });
-  </script>
-
-  <form id="uploadform" enctype="multipart/form-data" method="POST" action="/upload">
+  <form id="uploadform" enctype="multipart/form-data" method="POST">
     <input type="file" name="file" required />
-    <input type="number" name="folderId" placeholder="Folder ID (optional)" />
+    <select name="folderId" id="folderDropdown">
+      <option value="">No folder</option>
+    </select>
     <button type="submit">Upload</button>
   </form>
 
   <script src="/logout.js"></script>
+  <script src="/js/message.js"></script>
+  <script src="/js/navbar.js"></script>
+
   <script>
+    // Protect route
+    fetch("/me", { credentials: "include" })
+      .then(res => {
+        if (!res.ok) window.location.href = "/login.html";
+      })
+      .catch(() => {
+        window.location.href = "/login.html";
+      });
+
+    // Show logout button if authenticated
     fetch("/me", { credentials: "include" })
       .then(res => {
         if (res.ok) {
@@ -32,8 +41,21 @@
         }
       });
 
-    const form = document.getElementById("uploadform");
+    // Populate folder dropdown
+    fetch("/folders", { credentials: "include" })
+      .then(res => res.json())
+      .then(folders => {
+        const dropdown = document.getElementById("folderDropdown");
+        folders.forEach(folder => {
+          const option = document.createElement("option");
+          option.value = folder.id;
+          option.textContent = folder.name;
+          dropdown.appendChild(option);
+        });
+      });
 
+    // Handle form submission
+    const form = document.getElementById("uploadform");
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
@@ -49,8 +71,11 @@
       const msgEl = document.getElementById("message");
       msgEl.textContent = result.message || result.error;
       msgEl.style.color = response.ok ? "green" : "red";
+
+      if (response.ok) {
+        form.reset();
+      }
     });
   </script>
-  <script src="/js/navbar.js"></script>
-  <script src="/js/message.js"></script>
 </body>
+</html>
