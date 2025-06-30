@@ -6,31 +6,36 @@
 </head>
 <body>
   <h1>📁 Folder Files</h1>
-  <p id="message" style="font-weight: bold;"></p>
-
-  <table border="1" id="fileTable">
+  <p id="message" class="message"></p>
+  
+  <table id="fileTable">
     <thead>
       <tr>
         <th>Name</th>
         <th>Size (KB)</th>
         <th>Uploaded</th>
-        <th>Download</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
-
+  
   <script>
     const message = document.getElementById("message");
     const tableBody = document.querySelector("#fileTable tbody");
-
+    
     // Extract folder ID from ?id=123
     const params = new URLSearchParams(window.location.search);
     const folderId = params.get("id");
-
+    
     if (!folderId) {
       message.textContent = "Folder ID missing from URL.";
+      message.className = "message error";
     } else {
+      loadFiles();
+    }
+    
+    function loadFiles() {
       fetch(`/folders/${folderId}/files`, {
         credentials: "include"
       })
@@ -38,29 +43,91 @@
         .then(files => {
           if (!Array.isArray(files)) {
             message.textContent = "Error loading files.";
+            message.className = "message error";
             return;
           }
-
+          
           if (files.length === 0) {
             tableBody.innerHTML = "<tr><td colspan='4'>No files found in this folder.</td></tr>";
             return;
           }
-
-          files.forEach(file => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-              <td>${file.name}</td>
-              <td>${(file.size / 1024).toFixed(2)}</td>
-              <td>${new Date(file.uploadTime).toLocaleString()}</td>
-              <td><a href="/files/${file.id}/download">Download</a></td>
-            `;
-            tableBody.appendChild(row);
-          });
+          
+          renderFiles(files);
         })
         .catch(() => {
           message.textContent = "Failed to fetch files.";
+          message.className = "message error";
         });
     }
+    
+    function renderFiles(files) {
+      tableBody.innerHTML = "";
+      
+      files.forEach(file => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${escapeHtml(file.name)}</td>
+          <td>${(file.size / 1024).toFixed(2)}</td>
+          <td>${new Date(file.uploadTime).toLocaleString()}</td>
+          <td class="actions-cell">
+            <a href="/files/${file.id}/download" class="download-link">Download</a>
+            <button class="delete-btn" onclick="confirmDelete('${file.id}', '${escapeHtml(file.name)}')">
+              Delete
+            </button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+    
+    function confirmDelete(fileId, fileName) {
+      if (confirm(`Are you sure you want to delete "${fileName}"?\n\nThis action cannot be undone.`)) {
+        deleteFile(fileId);
+      }
+    }
+    
+    function deleteFile(fileId) {
+      // Find and disable the delete button
+      const deleteBtn = document.querySelector(`button[onclick*="${fileId}"]`);
+      if (deleteBtn) {
+        deleteBtn.disabled = true;
+        deleteBtn.textContent = "Deleting...";
+      }
+      
+      fetch(`/files/${fileId}`, {
+        method: "DELETE",
+        credentials: "include"
+      })
+        .then(res => {
+          if (res.ok) {
+            message.textContent = "File deleted successfully.";
+            message.className = "message success";
+            // Reload the files list
+            loadFiles();
+          } else {
+            return res.json().then(data => {
+              throw new Error(data.message || "Failed to delete file");
+            });
+          }
+        })
+        .catch(error => {
+          message.textContent = `Error deleting file: ${error.message}`;
+          message.className = "message error";
+          
+          // Re-enable the button
+          if (deleteBtn) {
+            deleteBtn.disabled = false;
+            deleteBtn.textContent = "Delete";
+          }
+        });
+    }
+    
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
   </script>
+    <script src="/js/navbar.js"></script>
 </body>
 </html>
