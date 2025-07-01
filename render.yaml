@@ -22,5 +22,5 @@ services:
 
 databases:
   - name: file-uploader-db
-    databaseName: fileuploader
-    user: fileuser
+    databaseName: file_uploader_db_tnje
+    user: file_uploader_db_tnje_user
