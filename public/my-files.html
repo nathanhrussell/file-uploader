@@ -76,7 +76,11 @@
                 <button onclick="copyToClipboard('${file.url}')">Copy</button>
               ` : "-"}
             </td>
-            <td>${file.folderId || "-"}</td>
+            <td>
+              ${file.folder
+                ? `<a href="/folder-files.html?id=${file.folder.id}">${file.folder.name}</a>`
+                : "-"}
+            </td>
             <td>
               <button onclick="deleteFile(${file.id})">Delete</button>
             </td>

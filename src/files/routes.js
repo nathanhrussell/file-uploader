@@ -56,9 +56,6 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-module.exports = router;
-
-
 router.get("/files/:id", async (req, res) => {
     if (!req.isAuthenticated?.()) {
         return res.status(40).json({ error: "Not authenticated" });
