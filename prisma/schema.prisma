@@ -45,6 +45,7 @@ model Folder {
   files        File[]
   shareToken   String?   @unique
   sharedUntil  DateTime?
+  cloudinaryPublicId  String?
 }
 
 
