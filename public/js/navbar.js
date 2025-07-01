@@ -1,11 +1,19 @@
-fetch("/partials/navbar.html")
-.then(res => res.text())
-.then(html => {
-    document.body.insertAdjacentHTML("afterbegin", html);
+document.addEventListener("DOMContentLoaded", async () => {
+  const isLoggedIn = await fetch("/me", { credentials: "include" }).then(res => res.ok).catch(() => false);
 
-    fetch("/me", { credentials: "include" }).then( res => {
-        if (res.ok) {
-            document.getElementById("logoutBtn").style.display = "inline-block";
-        }
-    });
+  const nav = document.createElement("nav");
+  nav.innerHTML = `
+    <a href="/index.html">Home</a> |
+    ${isLoggedIn ? `
+      <a href="/upload.html">Upload</a> |
+      <a href="/my-files.html">My Files</a> |
+      <a href="/folders.html">My Folders</a> |
+      <button onclick="logout()">Log Out</button>
+    ` : `
+      <a href="/login.html">Log In</a> |
+      <a href="/register.html">Register</a>
+    `}
+    <hr />
+  `;
+  document.body.prepend(nav);
 });
