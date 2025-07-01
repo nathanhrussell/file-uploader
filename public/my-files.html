@@ -40,11 +40,17 @@
         credentials: "include"
       });
 
-      if (res.ok) {
-        location.reload();
-      } else {
-        alert("Failed to delete file");
-      }
+    const msgEl = document.getElementById("message");
+
+    if (res.ok) {
+      msgEl.textContent = "File deleted successfully";
+      msgEl.style.color = "green";
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      msgEl.textContent = "Failed to delete file";
+      msgEl.style.color = "red";
+    }
+
     }
 
     fetch("/me", { credentials: "include" })
