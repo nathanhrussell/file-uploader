@@ -3,11 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <title>Upload a File</title>
+  <style>
+    body { display: none; }
+  </style>
 </head>
 <body>
-  <h1>Upload a File</h1>
+  <div id="navbar"></div>
 
-  <button id="logoutBtn" style="display: none;" onclick="logout()">Log Out</button>
+  <h1>Upload a File</h1>
 
   <p id="message" style="font-weight: bold;"></p>
 
@@ -19,12 +22,37 @@
     <button type="submit">Upload</button>
   </form>
 
+  <script>
+    async function setupNavbar() {
+      const isLoggedIn = await fetch("/me", { credentials: "include" })
+        .then(res => res.ok)
+        .catch(() => false);
+
+      const navbar = document.getElementById("navbar");
+      navbar.innerHTML = `
+        <nav>
+          <a href="/index.html">Home</a> |
+          ${isLoggedIn
+            ? `<a href="/upload.html">Upload</a> |
+               <a href="/my-files.html">My Files</a> |
+               <a href="/folders.html">My Folders</a> |
+               <button onclick="logout()">Log Out</button>`
+            : `<a href="/login.html">Log In</a> |
+               <a href="/register.html">Register</a>`}
+        </nav>
+        <hr />
+      `;
+
+      document.body.style.display = "block";
+    }
+
+    setupNavbar();
+  </script>
+
   <script src="/logout.js"></script>
   <script src="/js/message.js"></script>
-  <script src="/js/navbar.js"></script>
 
   <script>
-    // Protect route
     fetch("/me", { credentials: "include" })
       .then(res => {
         if (!res.ok) window.location.href = "/login.html";
@@ -33,7 +61,6 @@
         window.location.href = "/login.html";
       });
 
-    // Show logout button if authenticated
     fetch("/me", { credentials: "include" })
       .then(res => {
         if (res.ok) {
@@ -41,7 +68,6 @@
         }
       });
 
-    // Populate folder dropdown
     fetch("/folders", { credentials: "include" })
       .then(res => res.json())
       .then(folders => {
@@ -54,7 +80,6 @@
         });
       });
 
-    // Handle form submission
     const form = document.getElementById("uploadform");
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
