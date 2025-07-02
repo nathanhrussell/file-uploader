@@ -186,7 +186,7 @@ router.post("/folders/:id/share", async (req, res) => {
         }
     });
 
-    const shareUrl = `${req.protocol}//${req.get("host")}/share/${shareToken}`;
+    const shareUrl = `${req.protocol}://${req.get("host")}/share/${shareToken}`;
     res.json({ message: "Share link generated", shareUrl });
 } catch (err) {
     console.error("Error generating share link:", err);
