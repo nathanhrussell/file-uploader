@@ -3,8 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>My Files</title>
+  <style>
+    body { display: none; }
+  </style>
 </head>
 <body>
+  <div id="navbar"></div>
+
   <h1>📂 My Uploaded Files</h1>
   <p id="message" style="font-weight: bold;"></p>
   <table border="1" id="fileTable">
@@ -23,6 +28,31 @@
   </table>
 
   <script>
+    async function setupNavbar() {
+      const isLoggedIn = await fetch("/me", { credentials: "include" })
+        .then(res => res.ok)
+        .catch(() => false);
+
+      const navbar = document.getElementById("navbar");
+      navbar.innerHTML = `
+        <nav>
+          <a href="/index.html">Home</a> |
+          ${isLoggedIn
+            ? `<a href="/upload.html">Upload</a> |
+               <a href="/my-files.html">My Files</a> |
+               <a href="/folders.html">My Folders</a> |
+               <button onclick="logout()">Log Out</button>`
+            : `<a href="/login.html">Log In</a> |
+               <a href="/register.html">Register</a>`}
+        </nav>
+        <hr />
+      `;
+
+      document.body.style.display = "block";
+    }
+
+    setupNavbar();
+
     async function copyToClipboard(text) {
       try {
         await navigator.clipboard.writeText(text);
@@ -40,17 +70,16 @@
         credentials: "include"
       });
 
-    const msgEl = document.getElementById("message");
+      const msgEl = document.getElementById("message");
 
-    if (res.ok) {
-      msgEl.textContent = "File deleted successfully";
-      msgEl.style.color = "green";
-      setTimeout(() => location.reload(), 1000);
-    } else {
-      msgEl.textContent = "Failed to delete file";
-      msgEl.style.color = "red";
-    }
-
+      if (res.ok) {
+        msgEl.textContent = "File deleted successfully";
+        msgEl.style.color = "green";
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        msgEl.textContent = "Failed to delete file";
+        msgEl.style.color = "red";
+      }
     }
 
     fetch("/me", { credentials: "include" })
@@ -97,6 +126,6 @@
         document.getElementById("message").textContent = "Failed to fetch files.";
       });
   </script>
-  <script src="/js/navbar.js"></script>
+  <script src="/logout.js"></script>
 </body>
 </html>
