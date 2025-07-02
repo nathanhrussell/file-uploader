@@ -1,29 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Uploader</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>File Uploader</title>
+  <style>
+    body {
+      display: none;
+    }
+  </style>
 </head>
 <body>
+  <div id="navbar"></div>
+
+  <main>
     <h1>Welcome to File Uploader</h1>
-
     <p id="message" style="font-weight: bold;"></p>
-
     <button id="logoutBtn" style="display: none;" onclick="logout()">Log Out</button>
-    
-    <script>
-    fetch("/me", { credentials: "include" })
-        .then(res => {
-        if (res.ok) {
-            document.getElementById("logoutBtn").style.display = "inline-block";
-        } else {
-        }
-        });
-    </script>
-    
-<script src="/js/navbar.js"></script>
-<script src="/js/message.js"></script>
-<script src="/logout.js"></script>
+  </main>
+
+  <script>
+    async function setupPage() {
+      const isLoggedIn = await fetch("/me", { credentials: "include" })
+        .then(res => res.ok)
+        .catch(() => false);
+
+      const navbar = document.getElementById("navbar");
+      navbar.innerHTML = `
+        <nav>
+          <a href="/index.html">Home</a> |
+          ${isLoggedIn ? `
+            <a href="/upload.html">Upload</a> |
+            <a href="/my-files.html">My Files</a> |
+            <a href="/folders.html">My Folders</a> |
+            <button onclick="logout()">Log Out</button>
+          ` : `
+            <a href="/login.html">Log In</a> |
+            <a href="/register.html">Register</a>
+          `}
+        </nav>
+        <hr />
+      `;
+
+      if (isLoggedIn) {
+        document.getElementById("logoutBtn").style.display = "inline-block";
+      }
+      document.body.style.display = "block";
+    }
+
+    setupPage();
+  </script>
+
+  <script src="/js/message.js"></script>
+  <script src="/logout.js"></script>
 </body>
 </html>

@@ -14,8 +14,27 @@ const app = require("./app");
 const prisma = new PrismaClient();
 
 app.use((req, res, next) => {
-  res.locals.isLoggedIn = !!req.user;
-  next();
+  // Only intercept GET requests to .html files
+  if (req.method !== "GET") return next();
+
+  const url = req.path === "/" ? "/index.html" : req.path;
+  if (url.endsWith(".html")) {
+    const fs = require("fs");
+    const path = require("path");
+    const filePath = path.join(__dirname, "..", "public", url);
+
+    fs.readFile(filePath, "utf8", (err, data) => {
+      if (err) return next();
+
+      const injected = data.replace(
+        "<head>",
+        `<head><meta name="user-logged-in" content="${res.locals.isLoggedIn}">`
+      );
+      res.send(injected);
+    });
+  } else {
+    next();
+  }
 });
 
 app.use(expressSession({
