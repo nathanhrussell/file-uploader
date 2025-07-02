@@ -77,10 +77,8 @@
             <td>${new Date(file.uploadTime).toLocaleString()}</td>
             <td><a href="/files/${file.id}/download">Download</a></td>
             <td>
-              ${file.url ? `
-                <a href="${file.url}" target="_blank">Link</a>
-                <button onclick="copyToClipboard('${file.url}')">Copy</button>
-              ` : "-"}
+              <a href="/files/${file.id}/download">Link</a>
+              <button onclick="copyToClipboard('${location.origin}/files/${file.id}/download')">Copy</button>
             </td>
             <td>
               ${file.folder
