@@ -13,6 +13,11 @@ const { PrismaSessionStore } = require("@quixo3/prisma-session-store");
 const app = require("./app");
 const prisma = new PrismaClient();
 
+app.use((req, res, next) => {
+  res.locals.isLoggedIn = !!req.user;
+  next();
+});
+
 app.use(expressSession({
   secret: process.env.SESSION_SECRET,
   resave: false,
