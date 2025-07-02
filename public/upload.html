@@ -63,10 +63,12 @@
 
     fetch("/me", { credentials: "include" })
       .then(res => {
-        if (res.ok) {
-          document.getElementById("logoutBtn").style.display = "inline-block";
-        }
+        if (!res.ok) window.location.href = "/login.html";
+      })
+      .catch(() => {
+        window.location.href = "/login.html";
       });
+
 
     fetch("/folders", { credentials: "include" })
       .then(res => res.json())
