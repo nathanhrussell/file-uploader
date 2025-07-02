@@ -4,8 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Register</title>
+  <style>
+    body { display: none; }
+  </style>
 </head>
 <body>
+  <div id="navbar"></div>
+
   <h1>Register</h1>
 
   <p id="message" style="font-weight: bold;"></p>
@@ -18,7 +23,35 @@
 
   <p>Already have an account? <a href="/login.html">Log in here</a></p>
 
+  <script>
+    async function setupNavbar() {
+      const isLoggedIn = await fetch("/me", { credentials: "include" })
+        .then(res => res.ok)
+        .catch(() => false);
+
+      const navbar = document.getElementById("navbar");
+      navbar.innerHTML = `
+        <nav>
+          <a href="/index.html">Home</a> |
+          ${isLoggedIn
+            ? `<a href="/upload.html">Upload</a> |
+               <a href="/my-files.html">My Files</a> |
+               <a href="/folders.html">My Folders</a> |
+               <button onclick="logout()">Log Out</button>`
+            : `<a href="/login.html">Log In</a> |
+               <a href="/register.html">Register</a>`}
+        </nav>
+        <hr />
+      `;
+
+      document.body.style.display = "block";
+    }
+
+    setupNavbar();
+  </script>
+
   <script src="/js/message.js"></script>
+  <script src="/logout.js"></script>
 
   <script>
     const form = document.getElementById("registerForm");
@@ -53,6 +86,5 @@
       }
     });
   </script>
-  <script src="/js/navbar.js"></script>
 </body>
 </html>

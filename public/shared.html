@@ -1,57 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shared Folder</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shared Folder</title>
+  <style>
+    body { display: none; }
+  </style>
 </head>
 <body>
-    <h1>Shared Folder</h1>
-    <p id="message" style="font-weight: bold;"></p>
-    <h2 id="folderName"></h2>
-    <ul id="fileList"></ul>
+  <div id="navbar"></div>
 
-    <script>
-        const message = document.getElementById("message");
-        const folderName = document.getElementById("folderName");
-        const fileList = document.getElementById("fileList");
+  <h1>Shared Folder</h1>
+  <p id="message" style="font-weight: bold;"></p>
+  <h2 id="folderName"></h2>
+  <ul id="fileList"></ul>
 
-        const token = window.location.pathname.split("/").pop();
+  <script>
+    async function setupNavbar() {
+      const isLoggedIn = await fetch("/me", { credentials: "include" })
+        .then(res => res.ok)
+        .catch(() => false);
 
-        fetch(`/api/share/${token}`)
-            .then(async (res) => {
-                const data = await res.json();
+      const navbar = document.getElementById("navbar");
+      navbar.innerHTML = `
+        <nav>
+          <a href="/index.html">Home</a> |
+          ${isLoggedIn
+            ? `<a href="/upload.html">Upload</a> |
+               <a href="/my-files.html">My Files</a> |
+               <a href="/folders.html">My Folders</a> |
+               <button onclick="logout()">Log Out</button>`
+            : `<a href="/login.html">Log In</a> |
+               <a href="/register.html">Register</a>`}
+        </nav>
+        <hr />
+      `;
 
-                if (!res.ok) {
-                    message.textContent = data.error || "Something went wrong.";
-                    return;
-                }
+      document.body.style.display = "block";
+    }
 
-                folderName.textContent = data.folder.name;
+    setupNavbar();
+  </script>
 
-                if (!data.folder.files.length) {
-                    fileList.innerHTML = "<li>No files in this folder</li>";
-                    return;
-                }
+  <script>
+    const message = document.getElementById("message");
+    const folderName = document.getElementById("folderName");
+    const fileList = document.getElementById("fileList");
 
-                data.folder.files.forEach(file => {
-                    const li = document.createElement("li");
-                    const sizeKb = (file.size / 1024).toFixed(2);
+    const token = window.location.pathname.split("/").pop();
 
-                    li.innerHTML = `
-                        <strong>${file.name}</strong>
-                        (${sizeKb} KB, uploaded on ${new Date(file.uploadTime).toLocaleString()})
-                        — <a href="${file.url}" target="_blank" download>Download</a>
-                    `;
+    fetch(`/api/share/${token}`)
+      .then(async (res) => {
+        const data = await res.json();
 
-                    fileList.appendChild(li);
-                });
-            })
-            .catch(err => {
-                console.error(err);
-                message.textContent = "Error loading shared folder.";
-            });
-    </script>
-    <script src="/js/navbar.js"></script>
+        if (!res.ok) {
+          message.textContent = data.error || "Something went wrong.";
+          return;
+        }
+
+        folderName.textContent = data.folder.name;
+
+        if (!data.folder.files.length) {
+          fileList.innerHTML = "<li>No files in this folder</li>";
+          return;
+        }
+
+        data.folder.files.forEach(file => {
+          const li = document.createElement("li");
+          const sizeKb = (file.size / 1024).toFixed(2);
+
+          li.innerHTML = `
+            <strong>${file.name}</strong>
+            (${sizeKb} KB, uploaded on ${new Date(file.uploadTime).toLocaleString()})
+            — <a href="/files/${file.id}/download" download>Download</a>
+          `;
+
+          fileList.appendChild(li);
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        message.textContent = "Error loading shared folder.";
+      });
+  </script>
+
+  <script src="/logout.js"></script>
 </body>
 </html>
