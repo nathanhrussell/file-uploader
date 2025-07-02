@@ -3,8 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>My Folders</title>
+  <style>
+    body { display: none; }
+  </style>
 </head>
 <body>
+  <div id="navbar"></div>
+
   <h1>📁 My Folders</h1>
   <p id="message" style="font-weight: bold;"></p>
 
@@ -25,6 +30,35 @@
     </thead>
     <tbody></tbody>
   </table>
+
+  <script>
+    async function setupNavbarAndAuth() {
+      const isLoggedIn = await fetch("/me", { credentials: "include" })
+        .then(res => res.ok)
+        .catch(() => false);
+
+      if (!isLoggedIn) {
+        return window.location.href = "/login.html";
+      }
+
+      const navbar = document.getElementById("navbar");
+      navbar.innerHTML = `
+        <nav>
+          <a href="/index.html">Home</a> |
+          <a href="/upload.html">Upload</a> |
+          <a href="/my-files.html">My Files</a> |
+          <a href="/folders.html">My Folders</a> |
+          <button onclick="logout()">Log Out</button>
+        </nav>
+        <hr />
+      `;
+
+      document.body.style.display = "block";
+      fetchFolders();
+    }
+
+    setupNavbarAndAuth();
+  </script>
 
   <script>
     async function fetchFolders() {
@@ -134,23 +168,9 @@
         alert("Failed to create folder");
       }
     });
-
-    // Auth protection
-    fetch("/me", { credentials: "include" })
-      .then(res => {
-        if (!res.ok) {
-          window.location.href = "/login.html";
-        } else {
-          fetchFolders();
-        }
-      })
-      .catch(() => {
-        window.location.href = "/login.html";
-      });
   </script>
 
   <script src="/js/message.js"></script>
   <script src="/logout.js"></script>
-  <script src="/js/navbar.js"></script>
 </body>
 </html>

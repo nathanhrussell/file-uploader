@@ -3,8 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>📁 Folder Files</title>
+  <style>
+    body { display: none; }
+  </style>
 </head>
 <body>
+  <div id="navbar"></div>
+
   <h1>📁 Folder Files</h1>
   <p id="message" class="message"></p>
   
@@ -19,22 +24,49 @@
     </thead>
     <tbody></tbody>
   </table>
-  
+
+  <script>
+    async function setupNavbar() {
+      const isLoggedIn = await fetch("/me", { credentials: "include" })
+        .then(res => res.ok)
+        .catch(() => false);
+
+      const navbar = document.getElementById("navbar");
+      navbar.innerHTML = `
+        <nav>
+          <a href="/index.html">Home</a> |
+          ${isLoggedIn ? `
+            <a href="/upload.html">Upload</a> |
+            <a href="/my-files.html">My Files</a> |
+            <a href="/folders.html">My Folders</a> |
+            <button onclick="logout()">Log Out</button>
+          ` : `
+            <a href="/login.html">Log In</a> |
+            <a href="/register.html">Register</a>
+          `}
+        </nav>
+        <hr />
+      `;
+
+      document.body.style.display = "block";
+    }
+
+    setupNavbar();
+  </script>
+
   <script>
     const message = document.getElementById("message");
     const tableBody = document.querySelector("#fileTable tbody");
-    
-    // Extract folder ID from ?id=123
     const params = new URLSearchParams(window.location.search);
     const folderId = params.get("id");
-    
+
     if (!folderId) {
       message.textContent = "Folder ID missing from URL.";
       message.className = "message error";
     } else {
       loadFiles();
     }
-    
+
     function loadFiles() {
       fetch(`/folders/${folderId}/files`, {
         credentials: "include"
@@ -46,12 +78,12 @@
             message.className = "message error";
             return;
           }
-          
+
           if (files.length === 0) {
             tableBody.innerHTML = "<tr><td colspan='4'>No files found in this folder.</td></tr>";
             return;
           }
-          
+
           renderFiles(files);
         })
         .catch(() => {
@@ -59,10 +91,10 @@
           message.className = "message error";
         });
     }
-    
+
     function renderFiles(files) {
       tableBody.innerHTML = "";
-      
+
       files.forEach(file => {
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -71,29 +103,26 @@
           <td>${new Date(file.uploadTime).toLocaleString()}</td>
           <td class="actions-cell">
             <a href="/files/${file.id}/download" class="download-link">Download</a>
-            <button class="delete-btn" onclick="confirmDelete('${file.id}', '${escapeHtml(file.name)}')">
-              Delete
-            </button>
+            <button class="delete-btn" onclick="confirmDelete('${file.id}', '${escapeHtml(file.name)}')">Delete</button>
           </td>
         `;
         tableBody.appendChild(row);
       });
     }
-    
+
     function confirmDelete(fileId, fileName) {
       if (confirm(`Are you sure you want to delete "${fileName}"?\n\nThis action cannot be undone.`)) {
         deleteFile(fileId);
       }
     }
-    
+
     function deleteFile(fileId) {
-      // Find and disable the delete button
       const deleteBtn = document.querySelector(`button[onclick*="${fileId}"]`);
       if (deleteBtn) {
         deleteBtn.disabled = true;
         deleteBtn.textContent = "Deleting...";
       }
-      
+
       fetch(`/files/${fileId}`, {
         method: "DELETE",
         credentials: "include"
@@ -102,7 +131,6 @@
           if (res.ok) {
             message.textContent = "File deleted successfully.";
             message.className = "message success";
-            // Reload the files list
             loadFiles();
           } else {
             return res.json().then(data => {
@@ -113,21 +141,22 @@
         .catch(error => {
           message.textContent = `Error deleting file: ${error.message}`;
           message.className = "message error";
-          
-          // Re-enable the button
+
           if (deleteBtn) {
             deleteBtn.disabled = false;
             deleteBtn.textContent = "Delete";
           }
         });
     }
-    
+
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
     }
   </script>
-    <script src="/js/navbar.js"></script>
+
+  <script src="/js/message.js"></script>
+  <script src="/logout.js"></script>
 </body>
 </html>
