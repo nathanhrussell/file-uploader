@@ -32,6 +32,13 @@
   </table>
 
   <script>
+    const msgEl = document.getElementById("message");
+    function showMessage(text, isError = false) {
+      msgEl.textContent = text;
+      msgEl.style.color = isError ? "red" : "green";
+      setTimeout(() => msgEl.textContent = "", 3000);
+    }
+
     async function setupNavbarAndAuth() {
       const isLoggedIn = await fetch("/me", { credentials: "include" })
         .then(res => res.ok)
@@ -69,7 +76,7 @@
       table.innerHTML = "";
 
       if (!Array.isArray(data)) {
-        document.getElementById("message").textContent = "Failed to load folders.";
+        showMessage("Failed to load folders.", true);
         return;
       }
 
@@ -107,16 +114,19 @@
 
       const data = await res.json();
       if (res.ok) {
-        alert(`Share link: ${data.shareUrl}`);
+        showMessage(`Share link: ${data.shareUrl}`);
       } else {
-        alert(data.error || "Failed to generate share link");
+        showMessage(data.error || "Failed to generate share link", true);
       }
     }
 
     async function renameFolder(folderId) {
       const input = document.getElementById(`rename-${folderId}`);
       const newName = input.value.trim();
-      if (!newName) return alert("New name cannot be empty");
+      if (!newName) {
+        showMessage("New name cannot be empty", true);
+        return;
+      }
 
       const res = await fetch(`/folders/${folderId}`, {
         method: "PUT",
@@ -126,9 +136,10 @@
       });
 
       if (res.ok) {
+        showMessage("Folder renamed");
         fetchFolders();
       } else {
-        alert("Failed to rename folder");
+        showMessage("Failed to rename folder", true);
       }
     }
 
@@ -141,9 +152,10 @@
       });
 
       if (res.ok) {
+        showMessage("Folder deleted");
         fetchFolders();
       } else {
-        alert("Failed to delete folder");
+        showMessage("Failed to delete folder", true);
       }
     }
 
@@ -163,9 +175,10 @@
 
       if (res.ok) {
         input.value = "";
+        showMessage("Folder created");
         fetchFolders();
       } else {
-        alert("Failed to create folder");
+        showMessage("Failed to create folder", true);
       }
     });
   </script>
